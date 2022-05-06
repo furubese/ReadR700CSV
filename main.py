@@ -54,7 +54,16 @@ def MINS(global_data):
     return ret_min
 
 
-def gen_data(global_data, antena_list, base=None, data_0=False):
+def CREATE_TagId_DICT(global_data):
+    TagIdDict = {}
+    for sdata in global_data:
+        if sdata.EPC not in list(TagIdDict.keys()):
+            insert_dict = {sdata.EPC : []}
+            TagIdDict.update(insert_dict)
+    return TagIdDict
+
+
+def gen_data_antena(global_data, antena_list, base=None, data_0=False):
     if base is None:
         based = MINS(global_data)
     else:
@@ -67,6 +76,14 @@ def gen_data(global_data, antena_list, base=None, data_0=False):
                 if data_0:
                     other_antena_append0(antena_id, antena_list, sdata.Timestamp, based)
                 break
+
+def gen_data_tagid(global_data, taglist, base=None):
+    for sdata in global_data:
+        for tag_id in taglist:
+            if tag_id == sdata.EPC:
+                taglist[tag_id].append(sdata)
+                break
+
 
 """～～～サンプル関数～～～"""
 def Line(AntenaData, base_line, BarSize):
@@ -125,17 +142,30 @@ if __name__ == '__main__':
         "3": [],
         "4": [],
     }
-    gen_data(global_data, AntenaData, base=base_line, data_0=data_0)
 
+    Tag_ID_Data = CREATE_TagId_DICT(global_data)    #TagID
+
+    # gen_data_antena(global_data, AntenaData, base=base_line, data_0=data_0)
+    gen_data_tagid(global_data, Tag_ID_Data, base=base_line)
+
+    PlotData = Tag_ID_Data
+
+    for pd in PlotData:
+        print("~~~~~~~{}~~~~~~~~~~~~~~~~".format(pd))
+        cnt = 0
+        for p in PlotData[pd]:
+            cnt += 1
+        print("COUNT:{}".format(cnt))
     # 折れ線グラフを表示する
-    # Render = rnd.Render(AntenaData, default_value=base_line)
-    # Render.Line()
-    # Render.show()
+    Render = rnd.Render(PlotData, default_value=base_line)
+    Render.Line()
+    Render.show()
 
     # サンプルを一つ表示する
     # Bar1AndBar4(AntenaData, base_line, BarSize)
 
     # サンプルを全て表示する
+    """
     method_l = [
         Line,
         Bar,
@@ -144,10 +174,11 @@ if __name__ == '__main__':
     ]
     prosseses = []
     for m in method_l:
-        prs = Process(target=m, args=(AntenaData, base_line, BarSize,))
+        prs = Process(target=m, args=(PlotData, base_line, BarSize,))
 
         prs.start()
         prosseses.append(prs)
 
     for prs in prosseses:
         prs.join()
+    """
